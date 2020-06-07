@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,29 @@ namespace Cars
     {
         static void Main(string[] args)
         {
+
+            var cars2 = ProcessCars("fuel.csv");
+            var manufacturers = ProcessManufacturers("manufacturers.csv");
+
+            var query2 =
+                from car in cars2
+                join manufacture in manufacturers 
+                    on car.Manufacturer equals manufacture.Name
+                orderby car.Combined descending, car.Name ascending
+                select new
+                { 
+                    manufacture.Headquarters,
+                    car.Name,
+                    car.Combined
+                };
+
+
+            foreach (var car in query2.Take(10))
+            {
+                Console.WriteLine($"{car.Headquarters} {car.Name} : {car.Combined}");
+            }
+
+
             var cars = ProcessFile("fuel.csv");
 
             // METHOD SYNTAX
@@ -29,7 +53,7 @@ namespace Cars
                 from car in cars
                 where car.Manufacturer == "BMW" && car.Year == 2016     // asi se filtra por mas de un criterio
                 orderby car.Combined descending, car.Name ascending  // esta es la manera que aplicas mas de una manera de ordenar
-                select new 
+                select new
                 {
                     car.Manufacturer,
                     car.Name,
@@ -37,15 +61,15 @@ namespace Cars
                 };
 
 
-            var result = cars.SelectMany(c => c.Name)
-                .OrderBy(c => c);
+            //var result = cars.SelectMany(c => c.Name)
+            //    .OrderBy(c => c);
 
 
-            foreach (var character in result)
-            {
-                Console.WriteLine(character);
-            }
-            
+            //foreach (var character in result)
+            //{
+            //    Console.WriteLine(character);
+            //}
+
 
 
             //var result = cars.Any(c => c.Manufacturer == "Ford");
@@ -63,12 +87,40 @@ namespace Cars
             //    .Select(c => c)
             //    .FirstOrDefault(c => c.Manufacturer == "BMW" && c.Year == 2016); 
 
-            Console.WriteLine(result);
+            //Console.WriteLine(result);
 
             //foreach (var car in query.Take(10))
             //{
             //    Console.WriteLine($"{car.Manufacturer} {car.Name} : {car.Combined}");
             //}
+        }
+
+        private static List<Manufacturer> ProcessManufacturers(string path)
+        {
+            var query = File.ReadLines(path)
+                .Where(l => l.Length > 1)
+                .Select( l =>
+                {
+                    var columns = l.Split(',');
+                    return new Manufacturer
+                    { 
+                        Name = columns[0],
+                        Headquarters = columns[1],
+                        Year = int.Parse(columns[2])
+                    };
+                });
+
+            return query.ToList();
+        }
+
+        private static List<Car> ProcessCars(string path)
+        {
+            var query = File.ReadAllLines(path)
+                .Skip(1)
+                .Where(l => l.Length > 1)
+                .ToCar();
+
+            return query.ToList();
         }
 
         private static List<Car> ProcessFile(string path)
@@ -98,6 +150,9 @@ namespace Cars
             return query.ToList();
 
         }
+
+
+        
 
         
     }
